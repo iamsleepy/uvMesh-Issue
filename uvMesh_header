@@ -1,0 +1,76 @@
+#pragma once
+#ifndef UVMesh_H
+#define UVMesh_H
+
+#include <maya/MDataBlock.h>
+#include <maya/MDataHandle.h>
+#include <maya/MGlobal.h>
+#include <maya/MItGeometry.h>
+#include <maya/MItMeshPolygon.h>
+#include <maya/MItMeshVertex.h>
+#include <maya/MMatrix.h>
+#include <maya/MPointArray.h>
+#include <maya/MFloatPointArray.h>
+#include <maya/MDoubleArray.h>
+#include <maya/MStatus.h>
+#include <maya/MGlobal.h>
+
+#include <maya/MFnMesh.h>
+#include <maya/MFnMeshData.h>
+#include <maya/MFnNumericAttribute.h>
+#include <maya/MFnEnumAttribute.h>
+#include <maya/MFnTypedAttribute.h>
+#include <maya/MFnDoubleArrayData.h>
+
+#include <maya/MFnStringData.h>
+#include <maya/MFnStringArrayData.h>
+#include <maya/MFnPointArrayData.h>
+#include <maya/MFnIntArrayData.h>
+#include <maya/MFnFloatArrayData.h>
+
+#include <maya/MPxDeformerNode.h>
+
+#include <string>
+#include <iostream>
+
+#define McheckErr(stat,msg)         \
+    if ( MS::kSuccess != stat ) {   \
+        cerr << msg;                \
+        return MS::kFailure;        \
+    }
+
+
+class UVMesh : public MPxNode {
+public:
+	UVMesh() {};
+	virtual			~UVMesh() {};
+	MStatus getMeshArrays(MDataBlock& dataBlock);
+	MStatus setMeshArrays(MDataBlock& dataBlock);
+	virtual MStatus compute(const MPlug& plug, MDataBlock& dataBlock);
+
+	static void* creator();
+	static MStatus initialize();
+
+	static MTypeId id;
+	static MObject aInputMesh;
+	static MObject aBaseScale;
+	static MObject aReverseU;
+	static MObject aReverseV;
+	static MObject aBlend;
+	static MObject aGroundPlane;
+	static MObject aOutputMesh;
+
+	static MObject aBasePoints;
+	static MObject aPolyCounts;
+	static MObject aPolyConnects;
+	static MObject aUPoints;
+	static MObject aVPoints;
+
+	static MPointArray basePoints;
+	static MIntArray polyCounts;
+	static MIntArray polyConnects;
+	static MFloatArray uPoints;
+	static MFloatArray vPoints;
+
+};
+#endif
