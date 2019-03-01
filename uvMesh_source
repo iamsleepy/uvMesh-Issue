@@ -1,0 +1,168 @@
+#include "UVMesh.h"
+//#include "UVMesh_cmd.h"
+//#include <maya/MFnPlugin.h>
+
+MTypeId UVMesh::id(0x0012fe00);
+MObject UVMesh::aInputMesh;
+MObject UVMesh::aOutputMesh;
+MObject UVMesh::aBaseScale;
+MObject UVMesh::aBlend;
+MObject UVMesh::aGroundPlane;
+MObject UVMesh::aReverseU;
+MObject UVMesh::aReverseV;
+
+MObject UVMesh::aBasePoints;
+MObject UVMesh::aPolyCounts;
+MObject UVMesh::aPolyConnects;
+MObject UVMesh::aUPoints;
+MObject UVMesh::aVPoints;
+
+MPointArray UVMesh::basePoints;
+MIntArray UVMesh::polyCounts;
+MIntArray UVMesh::polyConnects;
+MFloatArray UVMesh::uPoints;
+MFloatArray UVMesh::vPoints;
+
+void* UVMesh::creator() { return new UVMesh; }
+
+MStatus UVMesh::compute(const MPlug& plug, MDataBlock& dataBlock) {
+	MStatus status;
+  
+	MObject tPolyCounts = dataBlock.inputValue(aPolyCounts).data();
+
+	dataBlock.setClean(plug);
+
+	
+	return MS::kSuccess;
+	
+	
+	//return status;
+}
+
+MStatus UVMesh::initialize() {
+	
+	MStatus status = MS::kSuccess;
+	MFnTypedAttribute tAttr;
+	MFnNumericAttribute nAttr;
+	MFnEnumAttribute eAttr;
+
+	//input mesh
+	MFnMeshData fnInMeshData;
+	MObject inMeshDefaultObj = fnInMeshData.create(&status);
+	UVMesh::aInputMesh = tAttr.create("inputMesh", "inMesh", MFnData::kMesh, inMeshDefaultObj, &status);
+	tAttr.setKeyable(true);
+	addAttribute(UVMesh::aInputMesh);
+
+	// Create the mesh array attrs
+	MFnPointArrayData basePointArrayData;
+	MPointArray tempPointArray;
+	basePointArrayData.create(tempPointArray);
+	MObject aBasePoints = tAttr.create("basePoints", "basePoints", MFnData::kPointArray, basePointArrayData.object(), &status);
+	tAttr.setStorable(false);
+	tAttr.setWritable(false);
+	tAttr.setConnectable(false);
+	tAttr.setHidden(true);
+	aBasePoints = tAttr.object();
+	addAttribute(aBasePoints);
+
+	MFnIntArrayData polyCountsArrayData;
+	MIntArray tempCountsArray;
+	polyCountsArrayData.create(tempCountsArray);
+	MObject aPolyCounts = tAttr.create("polyCounts", "polyCounts", MFnData::kIntArray, polyCountsArrayData.object(), &status);
+	tAttr.setStorable(false);
+	tAttr.setWritable(false);
+	tAttr.setConnectable(false);
+	tAttr.setHidden(true);
+	aPolyCounts = tAttr.object();
+	addAttribute(aPolyCounts);
+
+	MFnIntArrayData polyConnectsArrayData;
+	MIntArray tempConnectsArray;
+	polyConnectsArrayData.create(tempConnectsArray);
+	MObject aPolyConnects = tAttr.create("polyConnects", "polyConnects", MFnData::kIntArray, polyConnectsArrayData.object(), &status);
+	tAttr.setStorable(false);
+	tAttr.setWritable(false);
+	tAttr.setConnectable(false);
+	tAttr.setHidden(true);
+	aPolyConnects = tAttr.object();
+	addAttribute(aPolyConnects);
+
+	MFnFloatArrayData uPntArrayData;
+	MFloatArray tempUPointArray;
+	uPntArrayData.create(tempUPointArray);
+	MObject aUPoints = tAttr.create("uPoints", "uPoints", MFnData::kFloatArray, uPntArrayData.object(), &status);
+	tAttr.setStorable(false);
+	tAttr.setWritable(false);
+	tAttr.setConnectable(false);
+	tAttr.setHidden(true);
+	aUPoints = tAttr.object();
+	addAttribute(aUPoints);
+
+	MFnFloatArrayData vPntArrayData;
+	MFloatArray tempVPointArray;
+	vPntArrayData.create(tempVPointArray);
+	MObject aVPoints = tAttr.create("vPoints", "vPoints", MFnData::kFloatArray, vPntArrayData.object(), &status);
+	tAttr.setStorable(false);
+	tAttr.setWritable(false);
+	tAttr.setConnectable(false);
+	tAttr.setHidden(true);
+	aVPoints = tAttr.object();
+	addAttribute(aVPoints);
+
+	// General controls
+	UVMesh::aBlend = nAttr.create("blend", "blend", MFnNumericData::kFloat, 1.0);
+	nAttr.setMin(0.0);
+	nAttr.setMax(1.0);
+	nAttr.setKeyable(true);
+	nAttr.setWritable(true);
+	nAttr.setReadable(true);
+	addAttribute(UVMesh::aBlend);
+
+	UVMesh::aBaseScale = nAttr.create("baseScale", "baseScale", MFnNumericData::kFloat, 1.0);
+	nAttr.setKeyable(true);
+	nAttr.setWritable(true);
+	nAttr.setReadable(true);
+	addAttribute(UVMesh::aBaseScale);
+
+	UVMesh::aGroundPlane = eAttr.create("groundPlane", "groundPlane", 1);
+	eAttr.setChannelBox(true);
+	eAttr.addField("X", 0);
+	eAttr.addField("Y", 1);
+	eAttr.addField("Z", 2);
+	addAttribute(UVMesh::aGroundPlane);
+	
+	UVMesh::aReverseU = nAttr.create("reverseU", "reverseU", MFnNumericData::kBoolean, 0);
+	nAttr.setChannelBox(true);
+	addAttribute(UVMesh::aReverseU);
+	UVMesh::aReverseV = nAttr.create("reverseV", "reverseV", MFnNumericData::kBoolean, 0);
+	nAttr.setChannelBox(true);
+	addAttribute(UVMesh::aReverseV);
+
+	// output mesh
+	//MFnMeshData fnOutMeshData;
+	//MObject outMeshDefaultObj = fnOutMeshData.create(&status);
+	UVMesh::aOutputMesh = tAttr.create("outputMesh", "outMesh", MFnData::kMesh, &status);
+	tAttr.setStorable(true);
+	addAttribute(UVMesh::aOutputMesh);
+
+	attributeAffects(UVMesh::aInputMesh, UVMesh::aOutputMesh);
+	attributeAffects(UVMesh::aBlend, UVMesh::aOutputMesh);
+	attributeAffects(UVMesh::aGroundPlane, UVMesh::aOutputMesh);
+	attributeAffects(UVMesh::aBaseScale, UVMesh::aOutputMesh);
+	attributeAffects(UVMesh::aReverseU, UVMesh::aOutputMesh);
+	attributeAffects(UVMesh::aReverseV, UVMesh::aOutputMesh);
+	
+	attributeAffects(UVMesh::aInputMesh, UVMesh::aBasePoints);
+	attributeAffects(UVMesh::aInputMesh, UVMesh::aPolyConnects);
+	attributeAffects(UVMesh::aInputMesh, UVMesh::aPolyCounts);
+	attributeAffects(UVMesh::aInputMesh, UVMesh::aUPoints);
+	attributeAffects(UVMesh::aInputMesh, UVMesh::aVPoints);
+
+	attributeAffects(UVMesh::aBasePoints, UVMesh::aOutputMesh);
+	attributeAffects(UVMesh::aPolyConnects, UVMesh::aOutputMesh);
+	attributeAffects(UVMesh::aPolyCounts, UVMesh::aOutputMesh);
+	attributeAffects(UVMesh::aUPoints, UVMesh::aOutputMesh);
+	attributeAffects(UVMesh::aVPoints, UVMesh::aOutputMesh);
+
+	return MS::kSuccess;
+}
